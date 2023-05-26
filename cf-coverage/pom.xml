@@ -9,7 +9,7 @@
         <version>4.16.0-SNAPSHOT</version>
     </parent>
     <artifactId>cf-coverage</artifactId>
-    <version>4.16.0-SNAPSHOT</version>
+    <version>${project.parent.version}</version>
     <name>Apache BookKeeper :: Control Flow Coverage</name>
     <dependencies>
         <dependency>
