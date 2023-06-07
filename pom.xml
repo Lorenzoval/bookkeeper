@@ -218,7 +218,7 @@
     <rxjava.version>3.0.1</rxjava.version>
     <maven-failsafe-plugin.version>3.0.0-M6</maven-failsafe-plugin.version>
     <awaitility.version>4.0.3</awaitility.version>
-    <ba-dua.version>0.6.0</ba-dua.version>
+    <ba-dua.version>0.8.0</ba-dua.version>
   </properties>
 
   <!-- dependency definitions -->
