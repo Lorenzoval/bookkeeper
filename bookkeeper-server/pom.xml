@@ -199,12 +199,12 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <dependency>
+    <!-- <dependency> -->
        <!-- needed by ZooKeeper server tests utilities -->
-       <groupId>org.junit.jupiter</groupId>
+       <!--<groupId>org.junit.jupiter</groupId>
        <artifactId>junit-jupiter-api</artifactId>
        <scope>test</scope>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>org.apache.bookkeeper.stats</groupId>
       <artifactId>prometheus-metrics-provider</artifactId>
@@ -272,12 +272,12 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
-          <properties>
+          <!-- <properties>
             <property>
               <name>listener</name>
               <value>org.apache.bookkeeper.common.testing.util.TimedOutTestsListener</value>
             </property>
-          </properties>
+          </properties> -->
         </configuration>
       </plugin>
       <plugin>
