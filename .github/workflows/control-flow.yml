@@ -1,5 +1,5 @@
-name: Bookkeeper CI Build and Analyze
-run-name: ${{ github.actor }} is building and analyzing Bookkeeper
+name: BookKeeper CI Build and Analyze - Control Flow Coverage
+run-name: ${{ github.actor }} is building and analyzing BookKeeper - Control Flow Coverage
 on: [ push ]
 jobs:
   build:
