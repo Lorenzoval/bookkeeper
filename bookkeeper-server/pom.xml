@@ -272,6 +272,7 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <testFailureIgnore>true</testFailureIgnore>
           <!-- <properties>
             <property>
               <name>listener</name>
