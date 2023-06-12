@@ -13,6 +13,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @RunWith(Enclosed.class)
 public class NetworkTopologyImplRemoveTests {
@@ -69,8 +70,11 @@ public class NetworkTopologyImplRemoveTests {
                 check &= sut.getNumOfRacks() == this.racks;
                 if (this.leaves < leavesBeforeAdd)
                     check &= !sut.contains(input);
+                check &= !((ReentrantReadWriteLock)sut.netlock).isWriteLocked();
                 Assert.assertTrue(check);
             } catch (IllegalArgumentException e) {
+                Assert.assertFalse("Lock not unlocked after exception",
+                        ((ReentrantReadWriteLock) sut.netlock).isWriteLocked());
                 Assert.assertTrue("Exception thrown", this.exceptionExpected);
             }
         }
