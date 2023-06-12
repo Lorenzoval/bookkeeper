@@ -1,84 +1,23 @@
 package org.apache.bookkeeper.net;
 
+import static org.apache.bookkeeper.net.utils.NodeUtils.*;
+
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 @RunWith(Enclosed.class)
 public class NetworkTopologyImplAddTests {
-    private static final String VALID_NAME = "hostname";
-    private static final String VALID_NAME2 = "hostname2";
-    private static final String INVALID_NAME = "/hostname";
-    private static final String VALID_LOCATION = "/location";
-    private static final String VALID_LOCATION2 = "/location2";
-    private static final String INVALID_LOCATION = "location";
     private static final String ON_LEAF = VALID_LOCATION + "/" + VALID_NAME;
     private static final String ON_EXISTING_LOCATION = VALID_LOCATION;
     private static final String ON_NEW_LOCATION = VALID_LOCATION2;
-
-    public static Node createNode(String name, String location) {
-        Node node;
-        if (null == name) {
-            node = new NodeBase();
-            node.setNetworkLocation(location);
-        } else if (name.equals(INVALID_NAME)) {
-            node = new TestNode();
-            ((TestNode) node).setName(name);
-            node.setNetworkLocation(location);
-        } else if (null == location) {
-            node = new TestNode();
-            ((TestNode) node).setName(name);
-        } else if (location.equals(INVALID_LOCATION)) {
-            node = new TestNode();
-            ((TestNode) node).setName(name);
-            node.setNetworkLocation(location);
-        } else {
-            node = new NodeBase(name, location);
-        }
-        return node;
-    }
-
-    public static List<Node> createList(int configuration) {
-        List<Node> list = new ArrayList<>();
-        switch (configuration) {
-            case 0:
-                list.add(createNode(VALID_NAME, VALID_LOCATION));
-                break;
-            case 1:
-                list.add(createNode("", VALID_LOCATION));
-                break;
-            case 2:
-                list.add(createNode(null, VALID_LOCATION));
-                break;
-            case 3:
-                list.add(createNode(VALID_NAME, VALID_LOCATION));
-                list.add(createNode("", VALID_LOCATION));
-                break;
-            case 4:
-                list.add(createNode(VALID_NAME, VALID_LOCATION));
-                list.add(createNode(null, VALID_LOCATION));
-                break;
-            case 5:
-                list.add(createNode("", VALID_LOCATION));
-                list.add(createNode(null, VALID_LOCATION));
-                break;
-            case 6:
-                list.add(createNode(VALID_NAME, VALID_LOCATION));
-                list.add(createNode("", VALID_LOCATION));
-                list.add(createNode(null, VALID_LOCATION));
-                break;
-        }
-        return list;
-    }
 
     @RunWith(Parameterized.class)
     public static class NetworkTopologyImplAddOnEmptyTest {
@@ -212,13 +151,6 @@ public class NetworkTopologyImplAddTests {
             } catch (IllegalArgumentException e) {
                 Assert.assertTrue("Exception thrown", this.exceptionExpected);
             }
-        }
-    }
-
-    @Ignore
-    public static class TestNode extends NodeBase {
-        public void setName(String name) {
-            this.name = name;
         }
     }
 
