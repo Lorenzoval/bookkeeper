@@ -81,7 +81,7 @@ public class NetworkTopologyImplAddTests {
                 check &= sut.getNumOfRacks() == this.racks;
                 if (this.leaves > leavesBeforeAdd)
                     check &= sut.contains(input);
-                check &= !((ReentrantReadWriteLock)sut.netlock).isWriteLocked();
+                check &= !((ReentrantReadWriteLock) sut.netlock).isWriteLocked();
                 Assert.assertTrue(check);
             } catch (IllegalArgumentException e) {
                 Assert.assertFalse("Lock not unlocked after exception",
@@ -152,13 +152,18 @@ public class NetworkTopologyImplAddTests {
             if (exceptionClass != null) {
                 expected.expect(exceptionClass);
             }
-            sut.add(input);
-            check = sut.getNumOfLeaves() == this.leaves;
-            check &= sut.getNumOfRacks() == this.racks;
-            if (this.leaves > leavesBeforeAdd)
-                check &= sut.contains(input);
-            check &= !((ReentrantReadWriteLock)sut.netlock).isWriteLocked();
-            Assert.assertTrue(check);
+            try {
+                sut.add(input);
+                check = sut.getNumOfLeaves() == this.leaves;
+                check &= sut.getNumOfRacks() == this.racks;
+                if (this.leaves > leavesBeforeAdd)
+                    check &= sut.contains(input);
+                check &= !((ReentrantReadWriteLock) sut.netlock).isWriteLocked();
+                Assert.assertTrue(check);
+            } catch (Exception e) {
+                Assert.assertFalse(((ReentrantReadWriteLock) sut.netlock).isWriteLocked());
+                throw e;
+            }
         }
     }
 

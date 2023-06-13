@@ -42,8 +42,7 @@ public class NetworkTopologyImplRemoveTests {
                     {3, 2, true, new NetworkTopologyImpl.InnerNode(VALID_LOCATION2.substring(1), VALID_LOCATION)},
                     {3, 2, false, createNode(HELLO, VALID_LOCATION)},
                     {3, 2, true, new NetworkTopologyImpl.InnerNode(HELLO, VALID_LOCATION)},
-                    // Test Fails
-                    // {3, 2, true, createNode(VALID_NAME, INVALID_LOCATION)},
+                    {3, 2, false, createNode(VALID_NAME, INVALID_LOCATION)},
                     {2, 1, false, createNode(VALID_NAME, VALID_LOCATION2 + VALID_LOCATION)},
                     // Test Fails
                     // {3, 2, true, createNode(VALID_LOCATION2.substring(1), VALID_LOCATION)}
@@ -70,7 +69,7 @@ public class NetworkTopologyImplRemoveTests {
                 check &= sut.getNumOfRacks() == this.racks;
                 if (this.leaves < leavesBeforeAdd)
                     check &= !sut.contains(input);
-                check &= !((ReentrantReadWriteLock)sut.netlock).isWriteLocked();
+                check &= !((ReentrantReadWriteLock) sut.netlock).isWriteLocked();
                 Assert.assertTrue(check);
             } catch (IllegalArgumentException e) {
                 Assert.assertFalse("Lock not unlocked after exception",
@@ -90,16 +89,18 @@ public class NetworkTopologyImplRemoveTests {
         }
 
         @Test
-        public void removeInnerAddLeafTest() {
+        public void removeInnerAddNodeTest() {
             sut.add(createNode(VALID_NAME, VALID_LOCATION + VALID_LOCATION2));
             sut.add(createNode(VALID_NAME2, VALID_LOCATION + VALID_LOCATION2));
             sut.add(createNode(VALID_NAME, VALID_LOCATION2 + VALID_LOCATION));
+            // Remove "/" from VALID_LOCATION2 to use it as a valid name
             sut.remove(createNode(VALID_LOCATION2.substring(1), VALID_LOCATION));
             try {
-                sut.add(createNode(VALID_NAME, VALID_LOCATION + VALID_LOCATION2));
-            } catch (Exception e) {
-                e.printStackTrace();
-                Assert.fail("Can't add node");
+                sut.add(createNode(VALID_NAME, VALID_LOCATION2 + VALID_LOCATION2));
+                Assert.fail("InvalidTopologyException not thrown");
+            } catch (NetworkTopologyImpl.InvalidTopologyException e) {
+                // The node is at a different depth, so InvalidTopologyException should be thrown
+                Assert.assertTrue(true);
             }
         }
     }
