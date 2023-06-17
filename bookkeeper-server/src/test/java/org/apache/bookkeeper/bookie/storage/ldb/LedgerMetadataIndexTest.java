@@ -30,11 +30,13 @@ import org.mockito.junit.MockitoRule;
 public class LedgerMetadataIndexTest {
     private static final String MASTER_KEY = "masterKey";
 
-    private final boolean emptyDB;
-    private final long ledgerId;
+    private final DBState dbState;
+    private final long ledgerIdFirstGet;
     private final Class<Throwable> exceptionClass;
+    private final Class<Throwable> exceptionClassOnExecute;
     private final Class<Throwable> exceptionClass2;
     private final ChangeType changeType;
+    private final long ledgerIdSecondGet;
     private final LedgerData expected1;
     private final LedgerData expected2;
     @Rule
@@ -49,30 +51,44 @@ public class LedgerMetadataIndexTest {
     private Map<byte[], byte[]> map;
     private Iterator<Map.Entry<byte[], byte[]>> iterator;
 
-    public LedgerMetadataIndexTest(Class<Throwable> exceptionClass, boolean emptyDB, long ledgerId,
-                                   Class<Throwable> exceptionClass2, ChangeType changeType) {
+    public LedgerMetadataIndexTest(Class<Throwable> exceptionClass, DBState dbState, long ledgerIdFirstGet,
+                                   Class<Throwable> exceptionClassOnExecute, Class<Throwable> exceptionClass2,
+                                   ChangeType changeType, long ledgerIdSecondGet) {
         this.exceptionClass = exceptionClass;
-        this.emptyDB = emptyDB;
-        this.ledgerId = ledgerId;
+        this.dbState = dbState;
+        this.ledgerIdFirstGet = ledgerIdFirstGet;
+        this.exceptionClassOnExecute = exceptionClassOnExecute;
         this.exceptionClass2 = exceptionClass2;
         this.changeType = changeType;
-        this.expected1 = LedgerData.newBuilder().setExists(true).setFenced(false)
-                .setMasterKey(ByteString.copyFrom(new byte[0])).build();
+        this.ledgerIdSecondGet = ledgerIdSecondGet;
+        if (dbState == DBState.MASTER_KEY)
+            this.expected1 = LedgerData.newBuilder().setExists(true).setFenced(false)
+                    .setMasterKey(ByteString.copyFrom("a".getBytes())).build();
+        else
+            this.expected1 = LedgerData.newBuilder().setExists(true).setFenced(false)
+                    .setMasterKey(ByteString.copyFrom(new byte[0])).build();
         this.expected2 = expectedOutputFromChangeType(changeType);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> getParameters() {
         return Arrays.asList(new Object[][]{
-                {IOException.class, true, 1, null, ChangeType.NULL},
-                {IOException.class, false, -1, null, ChangeType.NULL},
-                {IOException.class, false, 0, null, ChangeType.NULL},
-                {null, false, 1, null, ChangeType.SET},
-                {null, false, 1, null, ChangeType.SET_FENCED},
-                {null, false, 1, null, ChangeType.SET_MASTER_KEY},
-                {null, false, 1, null, ChangeType.SET_EXPLICIT_LAC},
-                {null, false, 1, null, ChangeType.SET_LIMBO},
-                {null, false, 1, IOException.class, ChangeType.DELETE},
+                {IOException.class, DBState.EMPTY, 1, null, null, ChangeType.NULL, 1},
+                {IOException.class, DBState.INVALID, -1, null, null, ChangeType.NULL, 1},
+                {IOException.class, DBState.VALID, 0, null, null, ChangeType.NULL, 1},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET, 1},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET_FENCED, 1},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET_MASTER_KEY, 1},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET_EXPLICIT_LAC, 1},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET_LIMBO, 1},
+                {null, DBState.VALID, 1, null, IOException.class, ChangeType.DELETE, 1},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET, 2},
+                {null, DBState.VALID, 1, IOException.class, null, ChangeType.SET_FENCED, 2},
+                {null, DBState.VALID, 1, null, null, ChangeType.SET_MASTER_KEY, 2},
+                {null, DBState.VALID, 1, null, IOException.class, ChangeType.SET_EXPLICIT_LAC, 2},
+                {null, DBState.VALID, 1, IOException.class, null, ChangeType.SET_LIMBO, 2},
+                {null, DBState.VALID, 1, null, IOException.class, ChangeType.DELETE, 2},
+                {null, DBState.MASTER_KEY, 1, IOException.class, null, ChangeType.SET_MASTER_KEY, 1},
         });
     }
 
@@ -115,30 +131,56 @@ public class LedgerMetadataIndexTest {
                         .setMasterKey(ByteString.copyFrom(MASTER_KEY.getBytes()))
                         .setExplicitLac(ByteString.copyFrom(lacToAdd))
                         .setLimbo(true).build();
-                sut.set(1, ledgerData);
+                sut.set(ledgerIdSecondGet, ledgerData);
                 break;
             case SET_FENCED:
-                sut.setFenced(1);
+                sut.setFenced(ledgerIdSecondGet);
                 break;
             case SET_MASTER_KEY:
-                sut.setMasterKey(1, MASTER_KEY.getBytes());
+                sut.setMasterKey(ledgerIdSecondGet, MASTER_KEY.getBytes());
                 break;
             case SET_EXPLICIT_LAC:
                 lacToAdd = ByteBuffer.allocate(Long.BYTES);
                 lacToAdd.putLong(123);
                 byteBuf = Unpooled.wrappedBuffer(lacToAdd);
-                sut.setExplicitLac(1, byteBuf);
+                sut.setExplicitLac(ledgerIdSecondGet, byteBuf);
                 break;
             case SET_LIMBO:
-                sut.setLimbo(1);
+                sut.setLimbo(ledgerIdSecondGet);
                 break;
             case DELETE:
-                sut.delete(1);
+                sut.delete(ledgerIdSecondGet);
                 break;
             case NULL:
             default:
                 break;
         }
+    }
+
+    private void populateDB() {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        ByteString byteString;
+        map.put(buffer.array(), expected1.toByteArray());
+        switch (dbState) {
+            case VALID:
+                buffer.putLong(1);
+                byteString = ByteString.copyFrom(new byte[0]);
+                break;
+            case INVALID:
+                buffer.putLong(-1);
+                byteString = ByteString.copyFrom(new byte[0]);
+                break;
+            case MASTER_KEY:
+                buffer.putLong(1);
+                byteString = ByteString.copyFrom("a".getBytes());
+                break;
+            case EMPTY:
+            default:
+                return;
+        }
+        LedgerData ledgerData = LedgerData.newBuilder().setExists(true).setFenced(false).setMasterKey(byteString)
+                .build();
+        map.put(buffer.array(), ledgerData.toByteArray());
     }
 
     @Before
@@ -156,20 +198,16 @@ public class LedgerMetadataIndexTest {
         Mockito.when(closeableIterator.hasNext()).then(invocationOnMock -> iterator.hasNext());
         Mockito.when(closeableIterator.next()).then(invocationOnMock -> iterator.next());
 
-        if (!emptyDB) {
-            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-            buffer.putLong(1);
-            map.put(buffer.array(), expected1.toByteArray());
-        }
+        populateDB();
 
         this.sut = new LedgerMetadataIndex(new ServerConfiguration(), this.keyValueStorageFactory, "path",
                 new NullStatsLogger());
     }
 
     @Test
-    public void testLedgerMetadataIndex() throws IOException {
+    public void testLedgerMetadataIndex() {
         try {
-            LedgerData result = sut.get(this.ledgerId);
+            LedgerData result = sut.get(this.ledgerIdFirstGet);
             if (this.exceptionClass != null)
                 Assert.fail("Exception not thrown");
             Assert.assertEquals(result, this.expected1);
@@ -179,12 +217,22 @@ public class LedgerMetadataIndexTest {
                 e.printStackTrace();
             }
             Assert.assertTrue(this.exceptionClass.isInstance(e));
-        }
-        if (changeType == null || changeType == ChangeType.NULL)
             return;
-        executeChangeType();
+        }
         try {
-            LedgerData result = sut.get(1);
+            executeChangeType();
+            if (this.exceptionClassOnExecute != null)
+                Assert.fail("Exception not thrown");
+        } catch (Exception e) {
+            if (this.exceptionClassOnExecute == null) {
+                Assert.fail("Exception thrown");
+                e.printStackTrace();
+            }
+            Assert.assertTrue(this.exceptionClassOnExecute.isInstance(e));
+            return;
+        }
+        try {
+            LedgerData result = sut.get(ledgerIdSecondGet);
             if (this.exceptionClass2 != null)
                 Assert.fail("Exception not thrown");
             Assert.assertEquals(result, this.expected2);
@@ -195,6 +243,13 @@ public class LedgerMetadataIndexTest {
             }
             Assert.assertTrue(this.exceptionClass2.isInstance(e));
         }
+    }
+
+    private enum DBState {
+        EMPTY,
+        VALID,
+        INVALID,
+        MASTER_KEY
     }
 
     private enum ChangeType {
