@@ -432,10 +432,12 @@
               <targetClasses>
                 <param>org.apache.bookkeeper.net.NetworkTopologyImpl*</param>
                 <param>org.apache.bookkeeper.net.NodeBase</param>
+                <param>org.apache.bookkeeper.bookie.storage.ldb.LedgerMetadataIndex</param>
               </targetClasses>
               <targetTests>
                 <param>org.apache.bookkeeper.net.NetworkTopologyImplAddTests</param>
                 <param>org.apache.bookkeeper.net.NetworkTopologyImplRemoveTests</param>
+                <param>org.apache.bookkeeper.bookie.storage.ldb.LedgerMetadataIndexTest</param>
               </targetTests>
             </configuration>
             <executions>
