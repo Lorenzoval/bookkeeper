@@ -438,6 +438,8 @@
                 <param>org.apache.bookkeeper.net.NetworkTopologyImplAddTests</param>
                 <param>org.apache.bookkeeper.net.NetworkTopologyImplRemoveTests</param>
                 <param>org.apache.bookkeeper.bookie.storage.ldb.LedgerMetadataIndexTest</param>
+                <param>org.apache.bookkeeper.bookie.storage.ldb.LedgerMetadataIndexSetFencedTest</param>
+                <param>org.apache.bookkeeper.bookie.storage.ldb.LedgerMetadataIndexSetLimboTest</param>
               </targetTests>
             </configuration>
             <executions>

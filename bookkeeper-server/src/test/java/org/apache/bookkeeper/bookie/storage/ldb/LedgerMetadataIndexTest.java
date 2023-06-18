@@ -160,7 +160,6 @@ public class LedgerMetadataIndexTest {
     private void populateDB() {
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         ByteString byteString;
-        map.put(buffer.array(), expected1.toByteArray());
         switch (dbState) {
             case VALID:
                 buffer.putLong(1);
